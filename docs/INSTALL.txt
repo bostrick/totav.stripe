@@ -1,0 +1,17 @@
+tch.stripe Installation
+-----------------------
+
+To install tch.stripe using zc.buildout and the plone.recipe.zope2instance
+recipe to manage your project, you can do this:
+
+* Add ``tch.stripe`` to the list of eggs to install, e.g.:
+
+    [buildout]
+    ...
+    eggs =
+        ...
+        tch.stripe
+       
+* Re-run buildout, e.g. with:
+
+    $ ./bin/buildout

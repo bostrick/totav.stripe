@@ -2,6 +2,8 @@
 *.pyo
 *.tmp*
 *.mo
+.coverage
+htmlcov
 *.egg
 *.EGG
 *.egg-info

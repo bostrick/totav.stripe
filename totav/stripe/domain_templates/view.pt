@@ -1,0 +1,120 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      lang="en"
+      metal:use-macro="context/main_template/macros/master"
+      i18n:domain="totav.stripe">
+<body>
+
+<metal:main fill-slot="content-core">
+  <metal:content-core define-macro="content-core">
+
+    <h2>
+        Mode: <span tal:content="context/mode"/>
+    </h2> 
+
+    <div>
+        Information must be updated at 
+        <a href="https://stripe.com">https://stripe.com</a>.
+    </div>
+
+    <table class="listing" tal:define="
+        dinfo view/domain_info;
+        sdata dinfo/stripe_data;
+    ">
+    <tbody>
+
+        <tr>
+            <th> # Plans </th>
+            <td tal:content="dinfo/nplans"/> 
+        </tr>
+
+        <tr>
+            <th> # Customers </th>
+            <td tal:content="dinfo/ncustomers"/> 
+        </tr>
+
+        <tr>
+            <th> Name </th>
+            <td tal:content="sdata/business_name"/> 
+        </tr>
+
+        <tr>
+            <th> Display Name </th>
+            <td tal:content="sdata/display_name"/> 
+        </tr>
+
+        <tr>
+            <th> Email </th>
+            <td tal:content="sdata/email"/> 
+        </tr>
+
+        <tr>
+            <th> Logo </th>
+            <td> 
+                <img tal:attributes="src sdata/business_logo"/>
+            </td>
+        </tr>
+
+        <tr>
+            <th> Charge Enabled </th>
+            <td tal:content="sdata/charge_enabled"/> 
+        </tr>
+
+        <tr>
+            <th> Transfer Enabled </th>
+            <td tal:content="sdata/transfer_enabled"/> 
+        </tr>
+
+        <tr>
+            <th> Details Submitted </th>
+            <td tal:content="sdata/transfer_enabled"/> 
+        </tr>
+
+        <tr>
+            <th> Country </th>
+            <td tal:content="sdata/country"/> 
+        </tr>
+
+        <tr>
+            <th> Timezone </th>
+            <td tal:content="sdata/timezone"/> 
+        </tr>
+
+        <tr>
+            <th> Default Currency </th>
+            <td tal:content="sdata/default_currency"/> 
+        </tr>
+
+        <tr>
+            <th> Statement Descriptor </th>
+            <td tal:content="sdata/statement_descriptor"/> 
+        </tr>
+
+        <tr>
+            <th> Available Balance </th>
+            <td tal:content="sdata/balance/available"/> 
+        </tr>
+
+        <tr>
+            <th> Pending Balance </th>
+            <td tal:content="sdata/balance/pending"/> 
+        </tr>
+
+        <tal:comment replace="nothing">
+        <tr>
+            <th> info </th>
+            <td tal:content="context/stripe_data"/> 
+        </tr>
+        </tal:comment>
+
+    </tbody>
+    </table>
+
+  </metal:content-core>
+</metal:main>
+
+</body>
+</html>
+

@@ -1,0 +1,77 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      lang="en"
+      metal:use-macro="context/main_template/macros/master"
+      i18n:domain="totav.stripe">
+<body>
+
+<metal:main fill-slot="content-core">
+  <metal:content-core define-macro="content-core">
+  <tal:a define="ci view/customer_info">
+
+    <h2>
+        Welcome <span tal:content="user"></span>
+    </h2>
+
+    <div tal:content="ci">
+
+    </div>
+
+    <div tal:condition="not: ci/subscriptions"> 
+        
+        <h3>Become a Member!</h3>
+
+        <p>
+            Membership has it priviliges.  Joining TheClubhous.se
+            is a three step process...
+        </p>
+
+        <ol>
+
+            <li>
+                Review the 
+                <a target="_blank" tal:attributes="href ci/plans_url">
+                available plans</a>, and decide which plan
+                is right for you.
+            </li>
+
+            <li>
+                <span tal:condition="ci/cards"> <b>DONE!</b> </span>
+
+                Add 
+                <a tal:condition="not: ci/cards" 
+                    tal:attributes="href ci/add_card_url">
+                            billing information
+                </a> 
+                <span tal:condition="ci/cards">
+                    billing information
+                </span>
+                by associating a debit or credit card with your account.
+            </li>
+
+            <li>
+                Become a member by 
+                <a tal:condition="ci/cards" 
+                    tal:attributes="href ci/add_subscription_url">
+                    subscribing to the appropriate payment plan.
+                </a> 
+                <span tal:condition="not: ci/cards">
+                    subscribing to the appropriate payment plan.
+                </span>
+            </li>
+
+        </ol>
+
+    </div>
+
+    
+
+  </tal:a>
+  </metal:content-core>
+</metal:main>
+
+</body>
+</html>
+

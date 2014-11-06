@@ -1,0 +1,8 @@
+<div class="stripe_info">
+    <span class="discrete" tal:condition="context/stripe_id">
+        <tal:a content="context/stripe_id"/> |
+        <tal:a content="context/stripe_last_update"/> | 
+        <tal:a content="context/stripe_status"/> | 
+        <tal:a content="context/stripe_data"/> 
+    </span>
+</div>
