@@ -41,9 +41,7 @@ class ISubscription(form.Schema):
     form.widget(plan="z3c.form.browser.radio.RadioFieldWidget")
     plan = relationfield.RelationChoice (
         title = _(u"Plan"),
-        #source=ObjPathSourceBinder(portal_type="totav.stripe.plan")
         source=PlansVocabulary,
-        #widget=CheckBoxFieldWidget,
     )
 
     cancel_at_period_end = schema.Bool(

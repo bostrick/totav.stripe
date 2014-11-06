@@ -160,6 +160,50 @@ class FinishOnlyDataManager(object):
             pass
 
 
+class DataFilter(object):
+
+    def __call__(self, data, filter_map):
+
+        for k,v in filter_map.items():
+
+            try:
+                stub_key, base = self._resolve_key_base(data, k)
+                f = getattr(self, v)
+                base[stub_key] = f(data, k, base[stub_key])
+            except KeyError, e:
+                pass
+
+        return data
+            
+    def _resolve_key_base(self, data, key):
+
+        parts = key.split(".")
+        current = data
+
+        while parts:
+
+            if len(parts) == 1:
+
+                if parts[0] in current:
+                    return parts[0], current
+
+                raise KeyError("could not resolve key %s" % key)
+
+            next_key = parts.pop(0)
+            current = current.get(next_key, None)
+            if not isinstance(current, dict):
+                raise KeyError("could not resolve key %s" % key)
+
+        raise KeyError("could not resolve key %s" % key)
+
+    def cents_to_us_dollar(self, data, key, value):
+        return "$%.02f" % (float(value)/100.0)
+
+    def timestamp_to_formatted_date(self, data, key, value):
+        d = datetime.fromtimestamp(value)
+        return str(d)
+
+
 class StripeProxyManager(grok.Adapter):
 
     grok.implements(IStripeProxyManager)
@@ -174,6 +218,9 @@ class StripeProxyManager(grok.Adapter):
     # subclass responsibilities
     proxy_attrs = []
     proxy_attr_map = { 'stripe_id': "id" }
+
+    stripe_data_filter = DataFilter()
+    stripe_data_filter_map = {}
 
     @property
     def domain(self):
@@ -305,6 +352,11 @@ class StripeProxyManager(grok.Adapter):
         sd = self.context.stripe_data
         return json.loads(sd) if sd else {}
 
+    @property
+    def filtered_stripe_data_dict(self):
+        raw = self.stripe_data_dict
+        return self.stripe_data_filter(raw, self.stripe_data_filter_map)
+
     def search(self, **kw):
 
         cat = api.portal.get_tool(name='portal_catalog')
@@ -332,6 +384,7 @@ class StripeProxyManager(grok.Adapter):
             'portal_type': "totav.stripe.plan",
         }
         return self.search(**q)
+
 
 grok.templatedir('viewlet_templates')
 

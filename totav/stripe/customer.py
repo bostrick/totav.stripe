@@ -1,3 +1,6 @@
+
+from datetime import datetime
+
 from five import grok
 
 from z3c.form import group, field
@@ -175,11 +178,12 @@ class UpdateView(grok.View):
         for k in found_keys - existing_keys:
         
             inv = found[k]
+            inv_date = str(datetime.fromtimestamp(inv["date"]))
 
             inv_item = api.content.create(
                 container=self.context,
                 type="totav.stripe.invoice",
-                title=inv["id"],
+                title="Invoice %s" % inv_date,
                 id=inv["id"],
                 #stripe_data = inv,
             )
