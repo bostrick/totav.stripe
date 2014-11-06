@@ -1,0 +1,39 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      lang="en"
+      metal:use-macro="context/main_template/macros/master"
+      i18n:domain="totav.stripe">
+<body>
+
+<metal:main fill-slot="content-core">
+  <metal:content-core define-macro="content-core">
+
+    <table class="listing">
+    <tbody>
+        <tr>
+            <th> Number </th>
+            <td>
+                xxxx-xxxx-xxxx-<span tal:content="context/number" />
+            </td>
+        </tr>
+
+        <tr>
+            <th> Expiration </th>
+            <td>
+                <span tal:content="context/exp_month" /> / 
+                <span tal:content="context/exp_year" />  
+            </td>
+        </tr>
+
+    </tbody>
+    </table>
+        
+
+  </metal:content-core>
+</metal:main>
+
+</body>
+</html>
+

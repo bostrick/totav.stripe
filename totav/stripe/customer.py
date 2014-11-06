@@ -97,8 +97,6 @@ class CustomerStripeManager(StripeProxyManager):
 
     def _get_add_attrdict(self):
 
-        import pdb; pdb.set_trace()
-
         kw = super(CustomerStripeManager, self)._get_add_attrdict()
         kw.pop('delinquent', None)
         kw.pop('currency', None)

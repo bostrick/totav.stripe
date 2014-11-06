@@ -20,22 +20,29 @@ from totav.stripe.interfaces import IStripeProxy
 from totav.stripe.interfaces import IStripeProxyManager
 from totav.stripe.proxy import StripeProxyManager
 
+from zope.component import getUtility
+from zope.intid.interfaces import IIntIds
+
 @grok.provider(IContextSourceBinder)
 def PlansVocabulary(context):
 
     CT = SimpleVocabulary.createTerm
     bb = IStripeProxyManager(context).plan_brains()
-#    import pdb; pdb.set_trace()
-    tt = [ CT(b.UID, b.getObject(), b.Title) for b in bb]
+    tt = [ CT( b.getObject(), b.getObject(), b.Title) for b in bb ]
     return SimpleVocabulary(tt)
-
 
 class ISubscription(form.Schema):
 
+    title = schema.TextLine(
+        title = _(u"Subscription Name"),
+        default = _(u"My Subscription"),
+    )
+
+    form.widget(plan="z3c.form.browser.radio.RadioFieldWidget")
     plan = relationfield.RelationChoice (
         title = _(u"Plan"),
-        source=ObjPathSourceBinder(portal_type="totav.stripe.plan")
-        #source=PlansVocabulary,
+        #source=ObjPathSourceBinder(portal_type="totav.stripe.plan")
+        source=PlansVocabulary,
         #widget=CheckBoxFieldWidget,
     )
 
@@ -80,6 +87,7 @@ class ISubscription(form.Schema):
         required = False
     )
 
+    form.omitted('title')
     form.omitted('cancel_at_period_end')
     form.omitted('quantity')
     form.omitted('status')
@@ -88,7 +96,6 @@ class ISubscription(form.Schema):
     form.omitted('current_period_end')
     form.omitted('trial_start')
     form.omitted('trial_end')
-
 
 class Subscription(Item):
 
@@ -104,11 +111,6 @@ class SubscriptionStripeManager(StripeProxyManager):
         current_period_start current_period_end trial_start trial_end
     """.split()
 
-    proxy_attr_map = {
-        #'stripe_id': 'id',
-        #'title': 'name',
-    }
-
     @property
     def domain(self):
         return aq_parent(aq_inner(self.customer))
@@ -121,6 +123,14 @@ class SubscriptionStripeManager(StripeProxyManager):
     def api_base(self):
         c = IStripeProxyManager(self.customer)._retrieve_stripe_object()
         return c.subscriptions
+
+    def handle_add(self):
+
+        super(SubscriptionStripeManager, self).handle_add()
+        if self.context.plan:
+            pname = self.context.plan.to_object.title
+            self.context.title = "%s Subscription" % pname
+            self.context.reindexObject()
 
     def _get_attr_plan(self, key): 
         return self.context.plan.to_object.stripe_id
@@ -159,24 +169,16 @@ class SubscriptionStripeManager(StripeProxyManager):
 
         return kw
 
+class View(grok.View):
+    """ sample view class """
 
+    grok.context(ISubscription)
+    grok.require('zope2.View')
 
-# View class
-# The view will automatically use a similarly named template in
-# subscription_templates.
-# Template filenames should be all lower case.
-# The view will render when you request a content object with this
-# interface with "/@@sampleview" appended.
-# You may make this the default view for content objects
-# of this type by uncommenting the grok.name line below or by
-# changing the view class name and template filename to View / view.pt.
+    def view_info(self):
 
-#class SampleView(grok.View):
-#    """ sample view class """
-#
-#    grok.context(ISubscription)
-#    grok.require('zope2.View')
-#
-#    # grok.name('view')
-#
-#    # Add view methods here
+        m = IStripeProxyManager(self.context)
+        return {
+            'stripe_data': m.stripe_data_dict, 
+        }
+

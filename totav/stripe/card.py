@@ -56,6 +56,11 @@ years_vocab = SimpleVocabulary([
 
 class ICard(form.Schema):
 
+    title = schema.TextLine(
+        title=_(u"Nickname for Card"),
+        default=u"My Card",
+    )
+
     number = schema._field.TextLine(
         title=_(u"Credit Card Number"),
         default=u"4242424242424242",
@@ -172,12 +177,10 @@ class CardStripeManager(StripeProxyManager):
         return super(CardStripeManager, self)._update_from_remote(obj)
 
 
-class SampleView(grok.View):
+class View(grok.View):
     """ sample view class """
 
     grok.context(ICard)
     grok.require('zope2.View')
-
     # grok.name('view')
 
-    # Add view methods here
