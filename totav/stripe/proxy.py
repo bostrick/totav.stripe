@@ -388,20 +388,28 @@ class StripeProxyManager(grok.Adapter):
 
 grok.templatedir('viewlet_templates')
 
-class StripeInfoViewlet(grok.Viewlet):
-
-    """ A viewlet for displaying strip internal details """
-
-    grok.viewletmanager(IBelowContent)
-    grok.context(IStripeProxy)
-
-    def available(self):
-
-        try:
-            avail = IStripeProxy(self.context)
-        except TypeError:
-            return False
-
-        return True
-
-
+#class StripeInfoViewlet(grok.Viewlet):
+#
+#    """ A viewlet for displaying strip internal details """
+#
+#    grok.viewletmanager(IBelowContent)
+#    grok.context(IStripeProxy)
+##    grok.require("zope2.Edit")
+#
+#    def available(self):
+#
+#        return False 
+#
+#        try:
+#            avail = IStripeProxy(self.context)
+#        except TypeError:
+#            return False
+#
+#        user = api.user.get_current()
+#        roles = api.user.get_roles()
+#        if 'Site Administrator' not in roles:
+#            return False
+#
+#        return True
+#
+#

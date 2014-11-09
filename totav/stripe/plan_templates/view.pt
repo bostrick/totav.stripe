@@ -11,19 +11,21 @@
   <metal:content-core define-macro="content-core">
 
     <table class="listing">
-    <tr>
+    <tr class="odd">
         <th>Rate</th> 
         <td>
             <span tal:content="context/display_amount"/> / 
             <span tal:content="context/interval"/>
         </td>
     </tr>
+<!--
     <tr>
         <th>Trial Period</th> 
         <td>
             <span tal:content="context/trial_period_days"/> days
         </td>
     </tr>
+-->
     </table>
 
 
