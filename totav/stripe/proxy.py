@@ -280,13 +280,14 @@ class StripeProxyManager(grok.Adapter):
         obj = self._retrieve_stripe_object() if object is None else object
         obj.delete()
 
-    def update_from_stripe_object(self, object=None):
+    def update_from_stripe_object(self, obj=None):
 
-        obj = self._retrieve_stripe_object()
+        obj = obj if obj else self._retrieve_stripe_object()
         if not obj:
             return
         
         self._update_from_remote(obj)
+        self._update_stripe_attrs(obj)
 
     def _update_stripe_attrs(self, result):
 

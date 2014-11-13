@@ -29,45 +29,45 @@ class ICustomer(form.Schema):
         vocabulary=u"plone.principalsource.Users",
     )
 
-    email = schema.TextLine(
-        title=_(u"Email Address"),
-        description=
-            _(u"Leave blank to use the user's registered email address."),
-        required=False,
-    )
-
-    account_balance = schema.Int(
-        title=_(u"Account Balance"),
-        default=0,
-    )
-
-    currency = schema._field.Choice(
-        ( u'usd', ),
-        title=_(u"Currency"),
-        default='usd',
-    )
-
-    default_card = schema.TextLine(
-        title=_(u"Default Card"),
-        required=False,
-    )
-
-    delinquent = schema.Bool(
-        title=_(u"Delinquent"),
-        default = False,
-    )
-
-    #discount = schema.TextLine(
-    #    title=_(u"Dicount"),
-    #    required=False,
-    #)
-
-    form.omitted('account_balance')
-    form.omitted('currency')
-    form.omitted('default_card')
-    form.omitted('delinquent')
-
-    form.no_omit(IEditForm, 'delinquent')
+#    email = schema.TextLine(
+#        title=_(u"Email Address"),
+#        description=
+#            _(u"Leave blank to use the user's registered email address."),
+#        required=False,
+#    )
+#
+#    account_balance = schema.Int(
+#        title=_(u"Account Balance"),
+#        default=0,
+#    )
+#
+#    currency = schema._field.Choice(
+#        ( u'usd', ),
+#        title=_(u"Currency"),
+#        default='usd',
+#    )
+#
+#    default_card = schema.TextLine(
+#        title=_(u"Default Card"),
+#        required=False,
+#    )
+#
+#    delinquent = schema.Bool(
+#        title=_(u"Delinquent"),
+#        default = False,
+#    )
+#
+#    #discount = schema.TextLine(
+#    #    title=_(u"Dicount"),
+#    #    required=False,
+#    #)
+#
+#    form.omitted('account_balance')
+#    form.omitted('currency')
+#    form.omitted('default_card')
+#    form.omitted('delinquent')
+#
+#    form.no_omit(IEditForm, 'delinquent')
 
 class Customer(Container):
 
@@ -78,8 +78,6 @@ class CustomerStripeManager(StripeProxyManager):
     grok.context(ICustomer)
 
     proxy_attrs = """
-        email account_balance currency
-        default_card delinquent
     """.split()
 
     @property
@@ -94,15 +92,16 @@ class CustomerStripeManager(StripeProxyManager):
 
     def handle_add(self):
 
-        super(CustomerStripeManager, self).handle_add()
-        self.context.exclude_from_nav = True
-        self.context.reindexObject()
+        pass
+        #super(CustomerStripeManager, self).handle_add()
+        # created by domain
+
+        #self.context.exclude_from_nav = True
+        #self.context.reindexObject()
 
     def _get_add_attrdict(self):
 
         kw = super(CustomerStripeManager, self)._get_add_attrdict()
-        kw.pop('delinquent', None)
-        kw.pop('currency', None)
         kw.pop('id', None)
 
         if self.context.title:

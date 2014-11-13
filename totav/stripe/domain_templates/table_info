@@ -1,0 +1,99 @@
+
+    <div>
+        Information must be updated at 
+        <a href="https://stripe.com">https://stripe.com</a>.
+    </div>
+
+    <table class="listing" tal:define="
+        dinfo view/domain_info;
+        sdata dinfo/stripe_data;
+    ">
+    <tbody>
+
+        <tr>
+            <th> # Plans </th>
+            <td tal:content="dinfo/nplans"/> 
+        </tr>
+
+        <tr>
+            <th> # Customers </th>
+            <td tal:content="dinfo/ncustomers"/> 
+        </tr>
+
+        <tr>
+            <th> Name </th>
+            <td tal:content="sdata/business_name"/> 
+        </tr>
+
+        <tr>
+            <th> Display Name </th>
+            <td tal:content="sdata/display_name"/> 
+        </tr>
+
+        <tr>
+            <th> Email </th>
+            <td tal:content="sdata/email"/> 
+        </tr>
+
+        <tr>
+            <th> Logo </th>
+            <td> 
+                <img tal:attributes="src sdata/business_logo"/>
+            </td>
+        </tr>
+
+        <tr>
+            <th> Charge Enabled </th>
+            <td tal:content="sdata/charge_enabled"/> 
+        </tr>
+
+        <tr>
+            <th> Transfer Enabled </th>
+            <td tal:content="sdata/transfer_enabled"/> 
+        </tr>
+
+        <tr>
+            <th> Details Submitted </th>
+            <td tal:content="sdata/transfer_enabled"/> 
+        </tr>
+
+        <tr>
+            <th> Country </th>
+            <td tal:content="sdata/country"/> 
+        </tr>
+
+        <tr>
+            <th> Timezone </th>
+            <td tal:content="sdata/timezone"/> 
+        </tr>
+
+        <tr>
+            <th> Default Currency </th>
+            <td tal:content="sdata/default_currency"/> 
+        </tr>
+
+        <tr>
+            <th> Statement Descriptor </th>
+            <td tal:content="sdata/statement_descriptor"/> 
+        </tr>
+
+        <tr>
+            <th> Available Balance </th>
+            <td tal:content="sdata/balance/available"/> 
+        </tr>
+
+        <tr>
+            <th> Pending Balance </th>
+            <td tal:content="sdata/balance/pending"/> 
+        </tr>
+
+        <tal:comment replace="nothing">
+        <tr>
+            <th> info </th>
+            <td tal:content="context/stripe_data"/> 
+        </tr>
+        </tal:comment>
+
+    </tbody>
+    </table>
+

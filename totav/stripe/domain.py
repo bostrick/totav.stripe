@@ -18,6 +18,7 @@ from plone.dexterity.utils import createContentInContainer
 from plone.supermodel import model
 from zope import schema
 
+from plone.dexterity.utils import createContentInContainer
 
 from totav.stripe import MessageFactory as _
 
@@ -48,7 +49,8 @@ class IDomain(model.Schema):
         title=_(u"API Production Secret Key"),
     )
     
-    mode = schema._field.Choice(
+    #mode = schema._field.Choice(
+    mode = schema.Choice(
         ( u'testing', u'production', ),
         title=_(u"Mode"),
     )
@@ -58,49 +60,54 @@ class IDomain(model.Schema):
     )
 
     form.omitted('last_update')
-    form.omitted('production_key')
-    form.omitted('testing_key')
 
 class Domain(Container): 
 
     grok.implements(IDomain, IStripeProxy)
 
-    def update_from_stripe_acct(self):
+    def get_public_key(self):
 
-        if self.mode == "testing":
-            print "mode test"
-            stripe.api_key = self.testing_secret
-        elif self.mode == "production":
-            print "mode production"
-            stripe.api_key = self.production_secret
+        if self.mode == 'production':
+            return self.production_key
+        else:
+            return self.testing_key
 
-        h = {
-            'customers': self.update_customers(),
-            #'plans': self.update_plans(),
-        }
-
-    def update_customers(self):
-
-        res = stripe.Customer.all()
-
-        discovered = dict([ (c.stripe_id, c) for c in res.get("data") ])
-        discovered_keys = set(discovered)
-
-        existing = dict([ (c.id, c) for c in self.values() ])
-        existing_keys = set(existing)
-
-        print discovered_keys
-        print existing_keys
-
-        nadded = nremoved = nupdated = 0
-
-        for k in discovered_keys - existing_keys:
-
-            c = self._create_proxy("customer", discovered[k])
-            IStripeProxy(c).sync_from_stripe(discovered[k])
-            nadded += 1
-
-        return nadded, nremoved, nupdated
+#    def update_from_stripe_acct(self):
+#
+#        if self.mode == "testing":
+#            print "mode test"
+#            stripe.api_key = self.testing_secret
+#        elif self.mode == "production":
+#            print "mode production"
+#            stripe.api_key = self.production_secret
+#
+#        h = {
+#            'customers': self.update_customers(),
+#            #'plans': self.update_plans(),
+#        }
+#
+#    def update_customers(self):
+#
+#        res = stripe.Customer.all()
+#
+#        discovered = dict([ (c.stripe_id, c) for c in res.get("data") ])
+#        discovered_keys = set(discovered)
+#
+#        existing = dict([ (c.id, c) for c in self.values() ])
+#        existing_keys = set(existing)
+#
+#        print discovered_keys
+#        print existing_keys
+#
+#        nadded = nremoved = nupdated = 0
+#
+#        for k in discovered_keys - existing_keys:
+#
+#            c = self._create_proxy("customer", discovered[k])
+#            IStripeProxy(c).sync_from_stripe(discovered[k])
+#            nadded += 1
+#
+#        return nadded, nremoved, nupdated
 
     def _create_proxy(self, what, stripe_object):
 
@@ -164,8 +171,6 @@ class DomainStripeManager(StripeProxyManager):
 
     def update_from_stripe_object(self, object=None):
 
-        #import pdb; pdb.set_trace()
-
         b = self.api_base
         data = getattr(b, "Account").retrieve()
         data["balance"] = getattr(b, "Balance").retrieve()
@@ -175,10 +180,94 @@ class DomainStripeManager(StripeProxyManager):
 
         return self.decendents(portal_type="totav.stripe.customer")
 
+    @property
+    def plan_brains(self):
+        return self.decendents(portal_type="totav.stripe.plan")
+
+    def get_customer_brain(self, username):
+        bb = self.decendents(
+            portal_type="totav.stripe.customer",
+            title=username,
+        )
+        return bb[0] if bb else None
+
+    def enroll_customer(self, plan, token, username=None):
+
+        if not username:
+            user = api.user.current_user().getProperty("username")
+        else:
+            user = api.user.get(username=username)
+
+        username = user.getId()
+        email = user.getProperty("email")
+
+        b = self.get_customer_brain(username)
+        if not b:
+            cust = self.api_base.Customer.create(
+                card=token,
+                email=email,
+                metadata={'username': username, },
+                plan=plan,
+            )
+            print cust
+            custobj = createContentInContainer(
+                self.context,
+                "totav.stripe.customer",
+                id=cust.id,
+                title=username,
+                stripe_id=cust.id,
+                exclude_from_nav=True,
+                checkConstraints=False,
+            )
+            cmgr = IStripeProxyManager(custobj)
+            cmgr.update_from_stripe_object(cust)
+
+js_template = """
+<script type="text/javascript" >
+    var stripe_public_key = '%s';
+</script>
+"""
+
 class View(grok.View):
 
     grok.context(IDomain)
     grok.require('zope2.View')
+
+    def __call__(self, *args, **kw):
+
+        if not self.request["REQUEST_METHOD"] == "POST":
+            return super(View, self).__call__(*args, **kw)
+
+        plan = self.request.form.get('plan')
+        token = self.request.form.get('token')
+        username = self.request["AUTHENTICATED_USER"].getId()
+
+        if token and plan:
+
+            mgr = IStripeProxyManager(self.context)
+            mgr.enroll_customer(plan, token, username)
+
+        else:
+            print "bad post."
+
+        self.request.response.redirect(self.context.absolute_url())
+
+    def register_info(self):
+
+        portal = api.portal.get()
+        purl = portal.absolute_url()
+        user = None if api.user.is_anonymous() else api.user.get_current()
+
+        mgr = IStripeProxyManager(self.context)
+        customer = mgr.get_customer_brain(user.getId()) if user else None
+
+        h = {
+            'register_url': purl + "/@@register",
+            'login_url':    purl + "/login",
+            'customer':     customer,
+            'plans':        mgr.plan_brains,
+        }
+        return h
 
     def domain_info(self):
 
@@ -191,6 +280,9 @@ class View(grok.View):
         }
 
         return h
+
+    def js_setup(self):
+        return js_template % self.context.get_public_key()
 
 
 class UpdateView(grok.View):
