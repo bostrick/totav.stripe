@@ -45,14 +45,13 @@
         for="plone.dexterity.interfaces.IDexterityContent"
         />
 
-<configure xmlns="http://namespaces.zope.org/db">
+    <interface 
+      interface="totav.stripe.interfaces.IDonationRelated"/>
 
-  <include package="z3c.saconfig" file="meta.zcml"/>
-
-  <engine name="pas" url="postgresql://tch@localhost/tch_pas" />
-  <session name="pas.plugins.sqlalchemy" engine="pas" />
-
-</configure>
-
+    <configure xmlns="http://namespaces.zope.org/db">
+      <include package="z3c.saconfig" file="meta.zcml"/>
+      <engine name="pas" url="postgresql://tch@localhost/tch_pas" />
+      <session name="pas.plugins.sqlalchemy" engine="pas" />
+    </configure>
 
 </configure>

@@ -1,0 +1,143 @@
+<div class="tch_blob" tal:define="dinfo viewlet/donate_info">
+
+    <h3> Donate to theClubhou.se </h3>
+    <p/>
+
+    <form class="donate" tal:attributes="action dinfo/action" method="POST">
+
+        <div class="totav_stripe_indent">
+
+            <div class="messages"></div>
+
+            <div class="totav_stripe_item">
+                <input type="radio" name="amount" value="1000"/>  
+                <b>$10</b>
+            </div>
+    
+            <div class="totav_stripe_item">
+                <input type="radio" name="amount" value="2000"/>  
+                <b>$20</b>
+            </div>
+    
+            <div class="totav_stripe_item">
+                <input type="radio" name="amount" value="5000"/>  
+                <b>$50</b>
+            </div>
+    
+            <div class="totav_stripe_item">
+                <input type="radio" name="amount" value="10000"/>  
+                <b>$100</b>
+            </div>
+    
+            <div class="totav_stripe_item">
+                <input type="radio" name="amount" value="50000"/>  
+                <b>$500</b>
+            </div>
+    
+            <div class="totav_stripe_item">
+                <input type="radio" name="amount" value="other"/>  
+                <b>other</b> 
+                $ <input type="text" width="8" name="amount_text" value=""/>
+            </div>
+
+        </div>
+
+        <p/>
+
+        <input type="hidden" name="command" value="charge"/>
+
+        <input type="hidden" name="image_url" 
+            tal:attributes="value dinfo/image_url"/>
+
+        <input type="hidden" name="public_key" 
+            tal:attributes="value dinfo/public_key"/>
+
+        <button class="pay_button stripe-button">
+            <span>
+                Donate with Card
+            </span>
+        </button>
+
+        <script type="text/javascript" >
+        (function($) { $(document).ready(function() {
+
+            var add_message = function(msg, level) {
+                var div = $("div.messages");
+                var msg = $('<div class="totav_message">').text(msg);
+                div.empty().append(msg);
+            }
+
+            var form_to_object = function(form) {
+                var d = {};
+                $(form).serializeArray().forEach(function(item) {
+                    d[item['name']] = item['value'];
+                });
+                return d;
+            };
+
+            var form = $("form.donate");
+            var image_url = $("input[name='image_url'", form).attr('value');
+            var stripe_public_key = 
+                    $("input[name='public_key'", form).attr('value');
+
+            var stripe_handler = StripeCheckout.configure({
+
+                key: stripe_public_key,
+                image: 'logo.png',
+
+                token: function(token) {
+
+                    $.ajax({
+                        'url': form.attr("action"),
+                        'type': "POST",
+                        'data': {
+                            'command': 'charge',
+                            'token': token,
+                            'amount': amount,
+                        }
+                    })
+                        .done(function(data) {
+                            location.replace(form.attr("action"));
+                        })
+                        .error(function(xdr, what, msg) {
+                            text = what + ": " + msg;
+                            add_message(text);
+                        });
+                },
+            });
+            
+            $("button.stripe-button").on("click", function(e) {
+
+                e.preventDefault();
+                
+                form_data = form_to_object(form);
+                amount = form_data['amount'];
+
+                if (amount == 'other') {
+                    var txt = form_data['amount_text'];
+                    var tamt = Math.round(parseFloat(txt)*100);
+                    if (isNaN(tamt)) {
+                        var msg = "could not understand value " + txt;
+                        add_message(msg);
+                        //$("div.messages").text(t);
+                        return;
+                    } else {
+                        amount = tamt;
+                    }
+                } 
+
+                stripe_handler.open({
+                    name: 'Donate to theClubhou.se',
+                    description: 'Thank you for your donation!',
+                    amount: amount
+                });
+
+            });
+            
+        }) })(jQuery); 
+        </script>
+      
+
+    </form>
+
+</div>

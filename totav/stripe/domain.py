@@ -9,24 +9,35 @@ from Acquisition import aq_inner
 from plone import api
 
 from five import grok
-from z3c.form import group, field
-from zope import schema
 
 from plone.directives import dexterity, form
 from plone.dexterity.content import Container
-from plone.dexterity.utils import createContentInContainer
 from plone.supermodel import model
 from zope import schema
+
+from Products.statusmessages.interfaces import IStatusMessage
+from plone.app.layout.viewlets.interfaces import IHtmlHead
+from plone.app.layout.viewlets.interfaces import IBelowContentBody
 
 from plone.dexterity.utils import createContentInContainer
 
 from totav.stripe import MessageFactory as _
 
+from totav.stripe.interfaces import IDonationRelated
 from totav.stripe.proxy import IStripeProxy
 from totav.stripe.proxy import StripeProxyManager
 from totav.stripe.proxy import IStripeProxyManager
 
 # Interface class; used to define content-type schema.
+
+def get_stripe_domain_brain():
+
+    cat = api.portal.get_tool("portal_catalog")
+    bb = cat(portal_type="totav.stripe.domain")
+    if len(bb) > 1:
+        raise ValueError("more than one domain")
+    elif bb:
+        return bb[0]
 
 class IDomain(model.Schema):
     """
@@ -49,7 +60,6 @@ class IDomain(model.Schema):
         title=_(u"API Production Secret Key"),
     )
     
-    #mode = schema._field.Choice(
     mode = schema.Choice(
         ( u'testing', u'production', ),
         title=_(u"Mode"),
@@ -191,6 +201,22 @@ class DomainStripeManager(StripeProxyManager):
         )
         return bb[0] if bb else None
 
+    def handle_charge(self, token_id, amount, email=None):
+
+        if not (token_id and amount):
+            raise ValueError("token and amount must be provided")
+
+        text = "at.theclubhou.se donation"
+        if email:
+            text += " (%s)" % email
+
+        token = self.api_base.Charge.create(
+            amount=amount,
+            card=token_id,
+            currency="usd",
+            description=text,
+        )
+
     def enroll_customer(self, plan, token, username=None):
 
         if not username:
@@ -203,13 +229,14 @@ class DomainStripeManager(StripeProxyManager):
 
         b = self.get_customer_brain(username)
         if not b:
+
             cust = self.api_base.Customer.create(
                 card=token,
                 email=email,
                 metadata={'username': username, },
                 plan=plan,
             )
-            print cust
+
             custobj = createContentInContainer(
                 self.context,
                 "totav.stripe.customer",
@@ -219,16 +246,17 @@ class DomainStripeManager(StripeProxyManager):
                 exclude_from_nav=True,
                 checkConstraints=False,
             )
+
             cmgr = IStripeProxyManager(custobj)
             cmgr.update_from_stripe_object(cust)
 
-js_template = """
-<script type="text/javascript" >
-    var stripe_public_key = '%s';
-</script>
-"""
-
 class View(grok.View):
+
+    js_template = """
+        <script type="text/javascript" >
+            var stripe_public_key = '%s';
+        </script>
+    """
 
     grok.context(IDomain)
     grok.require('zope2.View')
@@ -238,19 +266,36 @@ class View(grok.View):
         if not self.request["REQUEST_METHOD"] == "POST":
             return super(View, self).__call__(*args, **kw)
 
-        plan = self.request.form.get('plan')
-        token = self.request.form.get('token')
-        username = self.request["AUTHENTICATED_USER"].getId()
+        if str(self.request.form.get("command")) == "charge":
 
-        if token and plan:
-
-            mgr = IStripeProxyManager(self.context)
-            mgr.enroll_customer(plan, token, username)
-
+            self._handle_charge()
+                
         else:
-            print "bad post."
 
-        self.request.response.redirect(self.context.absolute_url())
+            plan = self.request.form.get('plan')
+            token = self.request.form.get('token')
+            username = self.request["AUTHENTICATED_USER"].getId()
+
+            if token and plan:
+
+                mgr = IStripeProxyManager(self.context)
+                mgr.enroll_customer(plan, token, username)
+
+            else:
+                print "bad post."
+
+            self.request.response.redirect(self.context.absolute_url())
+
+    def _handle_charge(self):
+
+        token = self.request.form.get('token[id]')
+        amount = self.request.form.get('amount')
+        email = self.request.form.get('token[email]', "")
+
+        IStripeProxyManager(self.context).handle_charge(token, amount, email)
+
+        msg = _(u"Thank you for your donation.")
+        IStatusMessage(self.request).add(msg)
 
     def register_info(self):
 
@@ -282,7 +327,7 @@ class View(grok.View):
         return h
 
     def js_setup(self):
-        return js_template % self.context.get_public_key()
+        return self.js_template % self.context.get_public_key()
 
 
 class UpdateView(grok.View):
@@ -297,4 +342,43 @@ class UpdateView(grok.View):
         m = IStripeProxyManager(self.context)
         data = m.update_from_stripe_object()
         return data
+
+
+class DonateHeadViewlet(grok.Viewlet):
+
+    grok.viewletmanager(IHtmlHead)
+    grok.context(IDonationRelated)
+
+    def available(self): return True
+
+    def render(self):
+
+        a = '<script src="https://checkout.stripe.com/checkout.js"></script>'
+        return a
+
+
+class DonateViewlet(grok.Viewlet):
+
+    """ 
+    """
+
+    grok.viewletmanager(IBelowContentBody)
+    grok.context(IDonationRelated)
+
+    def available(self): return True
+
+    def donate_info(self):
+
+        b = get_stripe_domain_brain()
+        dom = b.getObject()
+
+        purl = api.portal.get().absolute_url()
+
+        h = {
+            'action': b.getPath(),
+            'public_key': dom.get_public_key(),
+            'next_url': b.getPath(),
+            'image_url': purl + "/logo.png",
+        }
+        return h
 

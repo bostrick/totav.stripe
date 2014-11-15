@@ -27,3 +27,9 @@ from zope.interface import Interface
 class IStripeProxy(Interface): pass
 
 class IStripeProxyManager(Interface): pass
+
+class IDonationRelated(Interface): 
+
+    """ marker interface to add donation form to a page """
+
+
